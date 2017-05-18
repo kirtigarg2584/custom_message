@@ -1,0 +1,5 @@
+drupal.custom_message:
+  version: VERSION
+  css:
+    theme:
+      css/custom_message.css: {}

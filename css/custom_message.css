@@ -1,0 +1,21 @@
+.custom-message-id .token-dialog {
+  float: right;
+  margin-right: 19px;
+}
+.custom-message-id {
+  max-width: 1015px;
+}
+
+.custom-message-id .form-item,
+.form-actions,
+.form-submit {
+  display: inline-block;
+  vertical-align: middle;
+  padding: 0 20px;
+}
+
+.custom_wrapper {
+  padding: 20px 0 5px 8px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin: 8px 0;
+}

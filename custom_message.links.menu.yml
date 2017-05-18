@@ -1,0 +1,5 @@
+custom_message.action_method_name:
+  title: 'Custom Message'
+  parent: system.admin_config_ui
+  description: 'Customize messages for specific content types'
+  route_name: 'custom_message.settings'

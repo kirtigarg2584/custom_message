@@ -1,0 +1,220 @@
+<?php
+
+/**
+ * @file
+ * Custom Message module file.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Utility\Token;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_theme().
+ */
+function custom_message_theme() {
+  $info['token_tree_link'] = [
+    'variables' => [
+      'token_types' => [],
+      'global_types' => TRUE,
+      'click_insert' => TRUE,
+      'show_restricted' => FALSE,
+      'show_nested' => FALSE,
+      'recursion_limit' => 3,
+      'text' => 'Browse Tokens',
+      'options' => [],
+    ],
+  ];
+  return $info;
+}
+
+/**
+ * Implements hook_message_grooming_handler().
+ */
+function custom_message_message_grooming_handler(&$form, &$form_state) {
+
+  $content_type = [];
+  $action_required = [];
+  $message = [];
+  $my_config = \Drupal::config('custom_message.Config')->get($form_state->getValue('custom_message'));
+
+  foreach ($my_config as $configkey => $configvalue) {
+    if ($configkey == 'count') {
+      $count = $configvalue;
+    }
+  }
+
+  foreach ($my_config as $configkey => $configvalue) {
+    for ($i = 0; $i < $count; $i++) {
+      if (strpos($configkey, "content_type$i") === 0) {
+        $content_type[] = $configvalue;
+      }
+    }
+  }
+
+  foreach ($my_config as $configkey => $configvalue) {
+    for ($i = 0; $i < $count; $i++) {
+      if (strpos($configkey, "action_required$i") === 0) {
+        $action_required[] = $configvalue;
+      }
+    }
+  }
+
+  foreach ($my_config as $configkey => $configvalue) {
+    for ($i = 0; $i < $count; $i++) {
+      if (strpos($configkey, "message$i") === 0) {
+        $message[] = $configvalue;
+      }
+    }
+  }
+
+  if (isset($_SESSION['messages'])) {
+    foreach ($_SESSION['messages'] as $status => $message_array) {
+      foreach ($_SESSION['messages'][$status] as $key => $value) {
+        $default_message = $value->__toString();
+        for ($i = 0; $i < $count; $i++) {
+
+          if (((strpos($default_message, $content_type[$i]) === 0)||strpos($default_message, $content_type[$i]) === 4) && (strpos($default_message, $action_required[$i]) !== FALSE)) {
+            unset($_SESSION['messages'][$status][$key]);
+            if (empty($_SESSION['messages'][$status])) {
+              if (strpos($default_message, 'deleted') !== FALSE) {
+                $mes = \Drupal::token()->replace($message[$i], ['node' => $_SESSION['node_data']]);
+                drupal_set_message(strip_tags($mes));
+              }
+
+              elseif (strpos($default_message, 'created') !== FALSE) {
+                $nid = db_query('SELECT MAX(nid) FROM {node}')->fetchField();
+                $nodedata = \Drupal::entityManager()->getStorage('node')->load($nid);
+                $mes = \Drupal::token()->replace($message[$i], ['node' => $nodedata]);
+                drupal_set_message(strip_tags($mes));
+              }
+
+              else {
+                $nid = \Drupal::routeMatch()->getParameter('node')->id();
+                $nodedata = \Drupal::entityManager()->getStorage('node')->load($nid);
+                $mes = \Drupal::token()->replace($message[$i], ['node' => $nodedata]);
+                drupal_set_message(strip_tags($mes));
+              }
+            }
+          }
+        }
+        for ($i = 0; $i < $count; $i++) {
+          if (((strpos($default_message, $content_type[$i]) === 0)||strpos($default_message, $content_type[$i]) === 4) && (strcmp($action_required[$i], 'all_actions') === 0)) {
+            unset($_SESSION['messages'][$status][$key]);
+            if (empty($_SESSION['messages'][$status])) {
+              if (strpos($default_message, 'deleted') !== FALSE) {
+                $mes = \Drupal::token()->replace($message[$i], ['node' => $_SESSION['node_data']]);
+                drupal_set_message(strip_tags($mes));
+              }
+
+              elseif (strpos($default_message, 'created') !== FALSE) {
+                $nid = db_query('SELECT MAX(nid) FROM {node}')->fetchField();
+                $nodedata = \Drupal::entityManager()->getStorage('node')->load($nid);
+                $mes = \Drupal::token()->replace($message[$i], ['node' => $nodedata]);
+                drupal_set_message(strip_tags($mes));
+              }
+              else {
+                $nid = \Drupal::routeMatch()->getParameter('node')->id();
+                $nodedata = \Drupal::entityManager()->getStorage('node')->load($nid);
+                $mes = \Drupal::token()->replace($message[$i], ['node' => $nodedata]);
+                drupal_set_message(strip_tags($mes));
+              }
+            }
+          }
+        }
+        for ($i = 0; $i < $count; $i++) {
+          if ((strcmp($content_type[$i], 'all_types') === 0) && (strpos($default_message, $action_required[$i]) !== FALSE)) {
+            unset($_SESSION['messages'][$status][$key]);
+            if (empty($_SESSION['messages'][$status])) {
+              if (strpos($default_message, 'deleted') !== FALSE) {
+                $mes = \Drupal::token()->replace($message[$i], ['node' => $_SESSION['node_data']]);
+                drupal_set_message(strip_tags($mes));
+              }
+
+              elseif (strpos($default_message, 'created') !== FALSE) {
+                $nid = db_query('SELECT MAX(nid) FROM {node}')->fetchField();
+                $nodedata = \Drupal::entityManager()->getStorage('node')->load($nid);
+                $mes = \Drupal::token()->replace($message[$i], ['node' => $nodedata]);
+                drupal_set_message(strip_tags($mes));
+              }
+              else {
+                $nid = \Drupal::routeMatch()->getParameter('node')->id();
+                $nodedata = \Drupal::entityManager()->getStorage('node')->load($nid);
+                $mes = \Drupal::token()->replace($message[$i], ['node' => $nodedata]);
+                drupal_set_message(strip_tags($mes));
+              }
+            }
+          }
+        }
+        for ($i = 0; $i < $count; $i++) {
+          if ((strcmp($content_type[$i], 'all_types') === 0) && (strcmp($action_required[$i], 'all_actions') === 0)) {
+            unset($_SESSION['messages'][$status][$key]);
+            if (empty($_SESSION['messages'][$status])) {
+              if (strpos($default_message, 'deleted') !== FALSE) {
+                $mes = \Drupal::token()->replace($message[$i], ['node' => $_SESSION['node_data']]);
+                drupal_set_message(strip_tags($mes));
+              }
+
+              elseif (strpos($default_message, 'created') !== FALSE) {
+                $nid = db_query('SELECT MAX(nid) FROM {node}')->fetchField();
+                $nodedata = \Drupal::entityManager()->getStorage('node')->load($nid);
+                $mes = \Drupal::token()->replace($message[$i], ['node' => $nodedata]);
+                drupal_set_message(strip_tags($mes));
+              }
+              else {
+                $nid = \Drupal::routeMatch()->getParameter('node')->id();
+                $nodedata = \Drupal::entityManager()->getStorage('node')->load($nid);
+                $mes = \Drupal::token()->replace($message[$i], ['node' => $nodedata]);
+                drupal_set_message(strip_tags($mes));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_node_form_alter().
+ */
+function custom_message_form_node_form_alter(&$form, FormStateInterface $form_state) {
+
+  foreach (array_keys($form['actions']) as $action) {
+    if ($action != 'preview' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
+      $form['actions'][$action]['#submit'][] = 'custom_message_message_grooming_handler';
+    }
+  }
+
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function custom_message_form_alter(&$form, $form_state, $form_id) {
+
+  if ((strpos($form_id, 'delete_form') !== FALSE) && (strpos($form_id, 'node') !== FALSE) && (strpos($form_id, 'node_type_delete_form') === FALSE)) {
+
+    $nid = \Drupal::routeMatch()->getParameter('node')->id();
+    $nodedata = \Drupal::entityManager()->getStorage('node')->load($nid);
+    $_SESSION['node_data'] = $nodedata;
+    $form['actions']['submit']['#submit'][] = 'custom_message_message_grooming_handler';
+  }
+
+}
+
+/**
+ * Implements hook_help().
+ */
+function custom_message_help($route_name, RouteMatchInterface $route_match) {
+
+  switch ($route_name) {
+    case 'help.main':
+      return "Customize messages for specific content types";
+
+    case 'help.page.custom_message':
+      return "Customize messages for specific content types";
+
+  }
+
+}
