@@ -1,4 +1,4 @@
-access all views:
-  title: 'Customize drupal messages'
-  decription: Customize messages for specific content types
+administer custom messages:
+  title: 'Administer custom messages'
+  decription: 'Customize messages for specific content types.'
   restrict access: TRUE

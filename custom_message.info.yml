@@ -1,9 +1,9 @@
 name: 'Custom Message'
 type: module
-description: 'Customize messages for specific content types'
+description: 'Customize messages for specific content types.'
 package: Custom
 core: 8.x
 
 dependencies:
   - token:token
-configure: custom_message.form
+configure: custom_message.settings

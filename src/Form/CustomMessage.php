@@ -5,7 +5,6 @@ namespace Drupal\custom_message\Form;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Entity\EntityManager;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
 
 /**
@@ -13,8 +12,6 @@ use Drupal\Core\Form\ConfigFormBase;
  */
 class CustomMessage extends ConfigFormBase {
 
-  protected $contentTypes;
-  protected $config;
   protected $ids = [];
   protected $content = [];
   protected $tempFlag = 0;
@@ -22,9 +19,8 @@ class CustomMessage extends ConfigFormBase {
   /**
    * Constructor to initialize class properties.
    */
-  public function __construct(EntityManager $type, ConfigFactoryInterface $conf) {
-    $this->content_types = $type;
-    $this->config = $conf;
+  public function __construct(EntityManager $type) {
+    $this->entityManager = $type;
   }
 
   /**
@@ -50,7 +46,7 @@ class CustomMessage extends ConfigFormBase {
    * {@inheritdoc}
    */
   protected function getEditableConfigNames() {
-    return ['custom_message.Config'];
+    return ['custom_message.settings'];
   }
 
   /**
@@ -58,7 +54,7 @@ class CustomMessage extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
 
-    $conf = $this->config->get('custom_message.Config');
+    $conf = $this->config('custom_message.settings');
 
     $form['#attached']['library'][] = 'custom_message/drupal.custom_message';
 
@@ -68,15 +64,17 @@ class CustomMessage extends ConfigFormBase {
       '#suffix' => '</div>',
     ];
 
-    $contentTypes_list = $this->content_types->getStorage('node_type')->loadMultiple();
+    $contentTypes_list = $this->entityManager->getStorage('node_type')->loadMultiple();
 
-    $this->content['all_types'] = 'All';
+    $this->content['all_types'] = ' All';
+    
     foreach ($contentTypes_list as $value) {
       $this->content[$value->get('name')] = $value->get('name');
     }
 
-    if (empty($form_state->get('count'))) {
-      if ($conf->get('count')) {
+    if (empty($form_state->get('count'))) { 
+      
+      if ($conf->get('count') && $form_state->get('flag')!= 10){
         $form_state->set('count', $conf->get('count'));
       }
 
@@ -85,28 +83,28 @@ class CustomMessage extends ConfigFormBase {
       }
 
     }
-
+    
     if (count($this->ids) === 0) {
-      for ($i = 0; $i < $form_state->get('count'); $i++) {
+      for ($i = 0; $i < $form_state->get('count');$i++) {
         array_push($this->ids, $i);
       }
     }
-
+    
     foreach ($this->ids as $i) {
 
       $form['custom_message']['content_type' . $i] = [
         '#type' => 'select',
         '#title' => $this->t('Content - Types'),
-        '#empty_option' => $this->t('Select'),
-        '#default_value' => $conf->get('content_type' . $i) ? $conf->get('content_type' . $i) : NULL,
+        '#empty_option' => $this->t('- Select -'),
+        '#default_value' => ($form_state->get('flag') != 10) ? ( $conf->get('content_type' . $i) ? : NULL) : NULL,
         '#options' => $this->content,
       ];
 
       $form['custom_message']['action_required' . $i] = [
         '#type' => 'select',
         '#title' => $this->t('Action'),
-        '#empty_option' => $this->t('Select'),
-        '#default_value' => $conf->get('action_required' . $i) ? $conf->get('action_required' . $i) : NULL,
+        '#empty_option' => $this->t('- Select -'),
+        '#default_value' => ($form_state->get('flag') != 10) ? ( $conf->get('action_required' . $i) ?  : NULL) : NULL,
         '#options' => [
           'all_actions' => 'All',
           'created' => 'Create',
@@ -114,11 +112,12 @@ class CustomMessage extends ConfigFormBase {
           'deleted' => 'Delete',
         ],
       ];
+      
 
       $form['custom_message']['message' . $i] = [
         '#type' => 'textfield',
         '#title' => $this->t('Message'),
-        '#default_value' => $conf->get('message' . $i)   ?: NULL,
+        '#default_value' => ($form_state->get('flag') != 10) ? ($conf->get('message' . $i)   ?: NULL) : NULL,
       ];
 
       $form['custom_message']['remove' . $i] = [
@@ -173,9 +172,11 @@ class CustomMessage extends ConfigFormBase {
       if (empty($values['content_type' . $key]) && !$trigerring_element) {
         $form_state->setErrorByName('content_type' . $key, $this->t('Content Type is empty'));
       }
+      
       if (empty($values['action_required' . $key]) && !$trigerring_element) {
         $form_state->setErrorByName('action_required' . $key, $this->t('Action Required is empty'));
       }
+      
       if (empty($values['message' . $key]) && !$trigerring_element) {
         $form_state->setErrorByName('message' . $key, $this->t('Message field is empty'));
       }
@@ -200,7 +201,6 @@ class CustomMessage extends ConfigFormBase {
   public function fieldCallback(array &$form, FormStateInterface $form_state) {
 
     return $form['custom_message'];
-
   }
 
   /**
@@ -213,7 +213,7 @@ class CustomMessage extends ConfigFormBase {
     array_push($this->ids, end($this->ids) + 1);
     $form_state->set('count', ($form_state->get('count') + 1));
     $form_state->setRebuild();
-
+    
   }
 
   /**
@@ -224,10 +224,13 @@ class CustomMessage extends ConfigFormBase {
   public function removeOne(array &$form, FormStateInterface $form_state) {
 
     $trigerring_element = $form_state->getTriggeringElement()['#name'];
-    if ($trigerring_element) {
-      unset($this->ids[$trigerring_element]);
-    }
+    
+    unset($this->ids[$trigerring_element]);
     $form_state->set('count', ($form_state->get('count') - 1));
+    
+    if ($form_state->get('count')== 0 ){
+      $form_state->set('flag', 10);
+    }
     $form_state->setRebuild();
 
   }
@@ -238,18 +241,18 @@ class CustomMessage extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
 
     $values = $form_state->getValues('custom_message');
-    $configEditable = $this->config->getEditable('custom_message.Config')->delete()->save();
+    $config = $this->config('custom_message.settings')->delete()->save();
     $tmp = 0;
     foreach ($this->ids as $value) {
-      $configEditable->set('content_type' . $tmp, $values['content_type' . $value]);
-      $configEditable->set('action_required' . $tmp, $values['action_required' . $value]);
-      $configEditable->set('message' . $tmp, $values['message' . $value]);
+      $config->set('content_type' . $tmp, $values['content_type' . $value]);
+      $config->set('action_required' . $tmp, $values['action_required' . $value]);
+      $config->set('message' . $tmp, $values['message' . $value]);
       $tmp++;
     }
 
-    $configEditable->set('count', $form_state->get('count'));
+    $config->set('count', $form_state->get('count'));
 
-    $configEditable->save();
+    $config->save();
 
     if (!$this->tempFlag) {
       drupal_set_message($this->t('Changes saved'));

@@ -36,7 +36,8 @@ function custom_message_message_grooming_handler(&$form, &$form_state) {
   $content_type = [];
   $action_required = [];
   $message = [];
-  $my_config = \Drupal::config('custom_message.Config')->get($form_state->getValue('custom_message'));
+  $count = 0;
+  $my_config = \Drupal::config('custom_message.settings')->get($form_state->getValue('custom_message'));
 
   foreach ($my_config as $configkey => $configvalue) {
     if ($configkey == 'count') {

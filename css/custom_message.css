@@ -3,7 +3,7 @@
   margin-right: 19px;
 }
 .custom-message-id {
-  max-width: 1015px;
+  max-width: 1080px;
 }
 
 .custom-message-id .form-item,
@@ -16,6 +16,5 @@
 
 .custom_wrapper {
   padding: 20px 0 5px 8px;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   margin: 8px 0;
 }
